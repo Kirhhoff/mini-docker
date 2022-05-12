@@ -31,20 +31,23 @@ int main(int argc, char **argv) {
 }
 
 static void run(int argc, char **argv) {
-    cout << "Running " << cmd(argc, argv) << endl;    
+    cout << "Running " << cmd(argc, argv) << " as " << getpid() << endl;    
+
+    if (unshare(CLONE_NEWPID) < 0) {
+        cerr << "Fail to unshare in manager" << endl;
+        exit(-1);
+    }
 
     pid_t child_pid = fork();
 
     if (child_pid < 0) {
-        cerr << "Fail to fork" << endl;
+        cerr << "Fail to fork child" << endl;
         return;
     }
 
     if (child_pid) {
         if(waitpid(child_pid, NULL, 0) < 0) {
             cerr << "Fail to wait for child" << endl;
-        } else {
-            cout << "Child terminated" << endl;
         }
     } else {        
         run_child(argc, argv);
@@ -60,6 +63,8 @@ static string cmd(int argc, char **argv) {
 }
 
 static void run_child(int argc, char **argv) {
+    cout << "Running " << cmd(argc, argv) << " as " << getpid() << endl;    
+
     int flags = CLONE_NEWUTS;
 
     if (unshare(flags) < 0) {
