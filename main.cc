@@ -3,7 +3,9 @@
 #include <vector>
 #include <iostream>
 #include <sched.h>
+
 #include <unistd.h>
+#include <sys/wait.h>
 
 using std::cout;
 using std::endl;
@@ -12,6 +14,9 @@ using std::string;
 
 static void run(int argc, char **argv);
 static string cmd(int argc, char **argv);
+static void run_child(int argc, char **argv);
+
+const char *child_hostname = "container";
 
 int main(int argc, char **argv) {
 
@@ -28,7 +33,22 @@ int main(int argc, char **argv) {
 static void run(int argc, char **argv) {
     cout << "Running " << cmd(argc, argv) << endl;    
 
-    execvp(argv[0], argv); 
+    pid_t child_pid = fork();
+
+    if (child_pid < 0) {
+        cerr << "Fail to fork" << endl;
+        return;
+    }
+
+    if (child_pid) {
+        if(waitpid(child_pid, NULL, 0) < 0) {
+            cerr << "Fail to wait for child" << endl;
+        } else {
+            cout << "Child terminated" << endl;
+        }
+    } else {        
+        run_child(argc, argv);
+    }
 }
 
 static string cmd(int argc, char **argv) {
@@ -37,4 +57,22 @@ static string cmd(int argc, char **argv) {
         cmd.append(argv[i]);
     }
     return cmd;
+}
+
+static void run_child(int argc, char **argv) {
+    int flags = CLONE_NEWUTS;
+
+    if (unshare(flags) < 0) {
+        cerr << "Fail to unshare in child" << endl;
+        exit(-1);
+    }
+
+    if (sethostname(child_hostname, strlen(child_hostname)) < 0) {
+        cerr << "Fail to change hostname" << endl;
+        exit(-1);
+    }
+
+    if (execvp(argv[0], argv)) {
+        cerr << "Fail to exec" << endl;
+    }
 }
