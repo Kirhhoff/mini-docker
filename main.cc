@@ -65,12 +65,17 @@ static string cmd(int argc, char **argv) {
 static void run_child(int argc, char **argv) {
     cout << "Child running " << cmd(argc, argv) << " as " << getpid() << endl;    
 
-    int flags = CLONE_NEWUTS;
+    int flags = CLONE_NEWUTS | CLONE_NEWNS;
 
     if (unshare(flags) < 0) {
         cerr << "Fail to unshare in child" << endl;
         exit(-1);
     }
+
+    if (mount(NULL, "/", NULL, MS_SLAVE | MS_REC, NULL) < 0) {
+        cerr << "Fail to mount /" << endl;
+        exit(-1);
+    } 
 
     if (chroot("../ubuntu-fs") < 0) {
         cerr << "Fail to chroot" << endl;
