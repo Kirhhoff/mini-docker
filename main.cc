@@ -82,6 +82,11 @@ static void run_child(int argc, char **argv) {
         exit(-1);
     }
 
+    if (mount("proc", "proc", "proc", 0, NULL) < 0) {
+        cerr << "Fail to mount /proc" << endl;
+        exit(-1);
+    } 
+
     if (sethostname(child_hostname, strlen(child_hostname)) < 0) {
         cerr << "Fail to change hostname" << endl;
         exit(-1);
