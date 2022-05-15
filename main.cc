@@ -6,6 +6,7 @@
 
 #include <unistd.h>
 #include <sys/wait.h>
+#include <sys/mount.h>
 
 using std::cout;
 using std::endl;
@@ -19,7 +20,6 @@ static void run_child(int argc, char **argv);
 const char *child_hostname = "container";
 
 int main(int argc, char **argv) {
-
     if (argc < 3) {
         cerr << "Too few arguments" << endl;
         exit(-1);
@@ -31,10 +31,10 @@ int main(int argc, char **argv) {
 }
 
 static void run(int argc, char **argv) {
-    cout << "Running " << cmd(argc, argv) << " as " << getpid() << endl;    
+    cout << "Parent running " << cmd(argc, argv) << " as " << getpid() << endl;    
 
     if (unshare(CLONE_NEWPID) < 0) {
-        cerr << "Fail to unshare in manager" << endl;
+        cerr << "Fail to unshare PID namespace" << endl;
         exit(-1);
     }
 
@@ -57,18 +57,28 @@ static void run(int argc, char **argv) {
 static string cmd(int argc, char **argv) {
     string cmd = "";
     for (int i = 0; i < argc; i++) {
-        cmd.append(argv[i]);
+        cmd.append(argv[i] + string(" "));
     }
     return cmd;
 }
 
 static void run_child(int argc, char **argv) {
-    cout << "Running " << cmd(argc, argv) << " as " << getpid() << endl;    
+    cout << "Child running " << cmd(argc, argv) << " as " << getpid() << endl;    
 
     int flags = CLONE_NEWUTS;
 
     if (unshare(flags) < 0) {
         cerr << "Fail to unshare in child" << endl;
+        exit(-1);
+    }
+
+    if (chroot("../ubuntu-fs") < 0) {
+        cerr << "Fail to chroot" << endl;
+        exit(-1);
+    }
+
+    if (chdir("/") < 0) {
+        cerr << "Fail to chdir to /" << endl;
         exit(-1);
     }
 
