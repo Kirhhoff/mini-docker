@@ -1,7 +1,8 @@
 # mini-docker: illustrate what docker really is in 100 lines of C/C++
 
 This is a reference C/C++ implemetation of [Containers From Scratch • Liz Rice • GOTO 2018](https://www.youtube.com/watch?app=desktop&v=8fi7uSYlOdc&feature=youtu.be),
-which illustrates the idea of docker in a few lines of Go.
+which illustrates the idea of docker in a few lines of Go. A detailed explanation of each line of code can be found on my [Zhihu answer](https://www.zhihu.com/question/28300645/answer/2488146755).
+
 
 To test the filesystem isolation of this mini-docker, you must first have an extra ubuntu filesystem for mini-docker running and mounting on.
 You can prepare this from your own ubuntu with following commands:
